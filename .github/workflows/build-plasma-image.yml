@@ -1,0 +1,57 @@
+name: Build image \w Plasma
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    
+    permissions:
+      packages: read
+      contents: write
+
+    container: 
+      image: lopsided/archlinux:latest
+
+    steps:
+      - name: Update system
+        run: pacman -Syu --noconfirm
+
+      - name: Install tools
+        run: pacman -S --noconfirm git arch-install-scripts wget
+      
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Create and mount image
+        run: |
+          echo "::group::Create image"
+          truncate -s 20G ./rootfs.img
+          mkfs.ext4 ./rootfs.img
+          echo "::endgroup::"
+          echo "::group::Mount image"
+          mkdir mountpoint
+          mount -o loop ./rootfs.img ./mountpoint/
+          mount -o size=512M,mode=0755 -t tmpfs none ./mountpoint/boot/efi --mkdir
+          echo "::endgroup::"
+
+      - name: Download generic rootfs tarball
+        run: |
+          wget "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz" -O ArchLinuxARM-aarch64-latest.tar.gz
+
+      - name: Extract generic rootfs
+        run: |
+          bsdtar -xpf ArchLinuxARM-aarch64-latest.tar.gz -C mountpoint
+
+      - name: Unmount rootfs image
+        run: |
+          umount -R ./mountpoint
+
+      - name: Shrink down rootfs image
+        run: |
+          e2fsck -f rootfs.img
+          resize2fs rootfs.img -M
