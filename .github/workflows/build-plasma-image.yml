@@ -33,7 +33,8 @@ jobs:
           echo "::group::Mount image"
           mkdir mountpoint
           sudo mount -o loop ./rootfs.img ./mountpoint/
-          sudo mount -o size=512M,mode=0755 -t tmpfs none ./mountpoint/boot/efi --mkdir
+          sudo mkdir ./mountpoint/boot/efi/ -p
+          sudo mount -o size=512M,mode=0755 -t tmpfs none ./mountpoint/boot/efi/
           echo "::endgroup::"
 
       - name: Download generic rootfs tarball
@@ -120,7 +121,7 @@ jobs:
 
       - name: Apply overlay
         run: |
-          sudo cp ./main/plasma/overlay/* -rv ./mountpoint/
+          sudo cp ./main/plasma/overlay/* -r ./mountpoint/
 
       - name: Configure system
         shell: bash
@@ -128,7 +129,7 @@ jobs:
           sudo arch-chroot ./mountpoint bash - <<'EOF'
           
           echo "::group::Create efi"
-          cp /opt/nabu/efi-template/* -r /boot/efi/
+          cp /opt/nabu/efi-template/* -rv /boot/efi/
           rm /opt/nabu/efi-template -r
           echo "::endgroup::"
 
@@ -145,7 +146,7 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::Pack efi"
-          tar czf "/opt/nabu/efi.tgz" -C "/boot/efi/" .
+          tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" .
           echo "::endgroup::"
 
           echo "::group::Install DE"
@@ -186,4 +187,4 @@ jobs:
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
-            ./rootfs.img.xz
+            ./rootfs.img.gz
