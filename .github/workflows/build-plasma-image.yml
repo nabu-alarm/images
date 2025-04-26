@@ -38,7 +38,7 @@ jobs:
 
       - name: Download generic rootfs tarball
         run: |
-          wget "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz" -O ArchLinuxARM-aarch64-latest.tar.gz
+          wget "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz" -qO ArchLinuxARM-aarch64-latest.tar.gz
 
       - name: Extract generic rootfs
         shell: bash
