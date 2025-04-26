@@ -45,6 +45,7 @@ jobs:
         shell: bash
         run: |
           sudo -i bash <<'EOF'
+          cd /home/runner/work/images/images/
           bsdtar -xpf ArchLinuxARM-aarch64-latest.tar.gz -C mountpoint
           EOF
 
