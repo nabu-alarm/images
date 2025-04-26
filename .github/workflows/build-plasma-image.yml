@@ -1,6 +1,10 @@
 name: Build images
 
 on:
+  push:
+    branches:
+      - main
+
   workflow_dispatch:
 
 jobs:
@@ -130,6 +134,7 @@ jobs:
           
           echo "::group::Create efi"
           cp /opt/nabu/efi-template/* -rv /boot/efi/
+          mkdir /boot/efi/EFI/arch/
           rm /opt/nabu/efi-template -r
           echo "::endgroup::"
 
