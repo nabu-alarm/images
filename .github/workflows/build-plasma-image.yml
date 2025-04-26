@@ -12,10 +12,9 @@ jobs:
       contents: write
 
     steps:
-      - name: Update system
+      - name: Update apt cache
         run: |
           sudo apt-get update
-          sudo apt-get upgrade -y
 
       - name: Install tools
         run: sudo apt-get install -y git arch-install-scripts wget libarchive-tools
