@@ -8,7 +8,6 @@ jobs:
     runs-on: ubuntu-24.04-arm
     
     permissions:
-      packages: read
       contents: write
 
     steps:
@@ -58,3 +57,19 @@ jobs:
         run: |
           e2fsck -f rootfs.img -y
           resize2fs rootfs.img -M
+
+      - name: Generate release name
+        run: |
+          echo "CURRENT_DATE=$(date +'%d-%m-%Y')" >> $GITHUB_ENV
+      
+      - name: Release rootfs
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.CURRENT_DATE }}-plasma
+          target_commitish: ${{ github.sha }}
+          name: Arch Linux ARM (Plasma) ${{ env.CURRENT_DATE }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ./rootfs.img
