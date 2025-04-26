@@ -56,5 +56,5 @@ jobs:
 
       - name: Shrink down rootfs image
         run: |
-          e2fsck -f rootfs.img
+          e2fsck -f rootfs.img -y
           resize2fs rootfs.img -M
