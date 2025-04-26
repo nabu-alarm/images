@@ -51,7 +51,7 @@ jobs:
       - name: Prepare system
         shell: bash
         run: |
-          sudo -i arch-chroot ./mountpoint bash - <<'EOF'
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
 
           echo "::group::Init pacman key store"
           pacman-key --init
@@ -125,7 +125,7 @@ jobs:
       - name: Configure system
         shell: bash
         run: |
-          sudo -i arch-chroot ./mountpoint bash - <<'EOF'
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           
           echo "::group::Create efi"
           cp /opt/nabu/efi-template/* -r /boot/efi/
