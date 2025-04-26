@@ -11,15 +11,14 @@ jobs:
       packages: read
       contents: write
 
-    container: 
-      image: lopsided/archlinux:latest
-
     steps:
       - name: Update system
-        run: pacman -Syu --noconfirm
+        run: |
+          sudo apt-get update
+          sudo apt-get upgrade -y
 
       - name: Install tools
-        run: pacman -S --noconfirm git arch-install-scripts wget
+        run: sudo apt-get install -y git arch-install-scripts wget libarchive-tools
       
       - name: Checkout main
         uses: actions/checkout@v4
