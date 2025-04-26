@@ -169,27 +169,26 @@ jobs:
           sudo umount -R ./mountpoint
           rmdir ./mountpoint
 
-      - name: Shrink down rootfs image
+      - name: Compress rootfs image
         run: |
           e2fsck -f rootfs.img -y
           resize2fs rootfs.img -M
-
-      - name: Compress rootfs image
-        run: |
           pigz -9 rootfs.img
 
-      - name: Generate release name
+      - name: Generate artifact name
         run: |
-          echo "CURRENT_DATE=$(date +'%d-%m-%Y')" >> $GITHUB_ENV
-      
-      - name: Release rootfs
-        uses: softprops/action-gh-release@v2
+          echo "ARTIFACT_NAME=plasma-rootfs-$(date +'%d-%m-%Y').img.gz" >> $GITHUB_ENV
+
+      - name: Upload rootfs artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ env.CURRENT_DATE }}-plasma
-          target_commitish: ${{ github.sha }}
-          name: Arch Linux ARM (Plasma) ${{ env.CURRENT_DATE }}
-          draft: false
-          prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
-          files: |
-            ./rootfs.img.gz
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ./rootfs.img.gz
+          retention-days: 90
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ github.run_id }}.txt
+          path: ${{ github.workflow }}/logs/*.log
