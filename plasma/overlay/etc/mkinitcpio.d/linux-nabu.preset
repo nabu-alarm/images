@@ -1,0 +1,16 @@
+# mkinitcpio preset file for the 'linux-nabu' package
+
+#ALL_config="/etc/mkinitcpio.conf"
+ALL_kver="/boot/vmlinuz-linux-nabu"
+
+PRESETS=('default')
+
+#default_config="/etc/mkinitcpio.conf"
+#default_image="/boot/initramfs-linux-nabu.img"
+default_uki="/boot/efi/EFI/arch/arch-linux-nabu.efi"
+#default_options="--splash /usr/share/systemd/bootctl/splash-arch.bmp"
+
+#fallback_config="/etc/mkinitcpio.conf"
+#fallback_image="/boot/initramfs-linux-nabu-fallback.img"
+#fallback_uki="/efi/EFI/Linux/arch-linux-nabu-fallback.efi"
+#fallback_options="-S autodetect"
