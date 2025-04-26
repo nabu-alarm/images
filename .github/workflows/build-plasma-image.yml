@@ -51,7 +51,7 @@ jobs:
       - name: Prepare system
         shell: bash
         run: |
-          sudo arch-chroot ./mountpoint <<'EOF'
+          sudo -i arch-chroot ./mountpoint bash - <<'EOF'
 
           echo "::group::Init pacman key store"
           pacman-key --init
@@ -83,7 +83,7 @@ jobs:
           echo "::endgroup::"
            
           echo "::group::Remove generic kernel"
-          pacman -R linux-aarch64
+          pacman -R --noconfirm linux-aarch64
           echo "::endgroup::"
           
           echo "::group::Update system"
@@ -125,7 +125,7 @@ jobs:
       - name: Configure system
         shell: bash
         run: |
-          sudo arch-chroot ./mountpoint <<'EOF'
+          sudo -i arch-chroot ./mountpoint bash - <<'EOF'
           
           echo "::group::Create efi"
           cp /opt/nabu/efi-template/* -r /boot/efi/
