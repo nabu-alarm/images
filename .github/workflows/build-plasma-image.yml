@@ -71,6 +71,14 @@ jobs:
           pacman-key --populate archlinuxarm || exit 1
           EOF
 
+      - name: Configure pacman mirrorlist
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          sed -i 's|Server = http://mirror.archlinuxarm.org/$arch/$repo|# Server = http://mirror.archlinuxarm.org/$arch/$repo|g' /etc/pacman.d/mirrorlist
+          sed -i 's|# Server = http://eu.mirror.archlinuxarm.org/$arch/$repo|Server = http://eu.mirror.archlinuxarm.org/$arch/$repo|g' /etc/pacman.d/mirrorlist
+          EOF
+
       - name: Delete default user
         shell: bash
         run: |
