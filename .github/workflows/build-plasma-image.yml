@@ -173,6 +173,20 @@ jobs:
           echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-wheel || exit 1
           EOF
 
+      - name: Install plymouth
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          pacman -S --noconfirm plymouth || exit 1
+          EOF
+
+      - name: Install DE
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          pacman -S --noconfirm plasma networkmanager pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox bluez bluez-utils vulkan-freedreno qt6-multimedia-gstreamer zram-generator || exit 1
+          EOF
+
       - name: Apply overlay
         run: |
           sudo cp ./main/plasma/overlay/* -r ./mountpoint/
@@ -187,13 +201,6 @@ jobs:
           cp /opt/nabu/efi-template/* -rv /boot/efi/ || exit 1
           mkdir /boot/efi/EFI/arch/ || exit 1
           rm /opt/nabu/efi-template -r || exit 1
-          EOF
-
-      - name: Install plymouth
-        shell: bash
-        run: |
-          sudo arch-chroot ./mountpoint bash - <<'EOF'
-          pacman -S --noconfirm plymouth || exit 1
           EOF
 
       - name: Configure mkinitcpio
@@ -215,13 +222,6 @@ jobs:
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
           tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
-          EOF
-
-      - name: Install DE
-        shell: bash
-        run: |
-          sudo arch-chroot ./mountpoint bash - <<'EOF'
-          pacman -S --noconfirm plasma networkmanager pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox bluez bluez-utils vulkan-freedreno qt6-multimedia-gstreamer zram-generator || exit 1
           EOF
 
       - name: Enable services
