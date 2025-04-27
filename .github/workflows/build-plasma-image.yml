@@ -53,31 +53,41 @@ jobs:
           bsdtar -xpf ArchLinuxARM-aarch64-latest.tar.gz -C mountpoint || exit 1
           EOF
 
-      - name: Prepare system
+      - name: Init pacman key store
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
-
-          echo "::group::Init pacman key store"
           pacman-key --init || exit 1
           pacman-key --populate archlinuxarm || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Delete default user"
+      - name: Delete default user
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           userdel alarm || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Set locale"
+      - name: Set locale
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           sed -i "s|#en_US.UTF-8 UTF-8|en_US.UTF-8 UTF-8|g" "/etc/locale.gen" || exit 1
           locale-gen || exit 1
           echo "LANG=en_US.UTF-8" > "/etc/locale.conf" || exit 1
-          echo "::endgroup::"
+          EOF
           
-          echo "::group::Enable parallel downloads"
+      - name: Enable parallel downloads
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           sed -i "s/#ParallelDownloads/ParallelDownloads/g" /etc/pacman.conf || exit 1
-          echo "::endgroup::"
+          EOF
           
-          echo "::group::Add nabu-alarm repo"
+      - name: Add nabu-alarm repo
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman-key --recv-key 666411233117519B --keyserver keyserver.ubuntu.com || exit 1
           pacman-key --lsign-key 666411233117519B || exit 1
           echo "[nabu-alarm]" >> /etc/pacman.conf || exit 1
@@ -85,83 +95,119 @@ jobs:
           echo "Server = https://nabu-alarm.github.io/repo" >> /etc/pacman.conf || exit 1
           pacman -Sy --noconfirm nabu-alarm-keyring || exit 1
           pacman-key --populate || exit 1
-          echo "::endgroup::"
+          EOF
            
-          echo "::group::Remove generic kernel"
+      - name: Remove generic kernel
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -R --noconfirm linux-aarch64 || exit 1
-          echo "::endgroup::"
+          EOF
           
-          echo "::group::Update system"
+      - name: Update system
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -Syu --noconfirm || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Install firmwares"
+      - name: Install firmwares
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -S --noconfirm linux-firmware-xiaomi-nabu || exit 1
-          echo "::endgroup::"
+          EOF
           
-          echo "::group::Install kernel and headers"
+      - name: Install kernel and headers
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -S --noconfirm linux-nabu linux-nabu-headers || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Install alsa ucm config"
+      - name: Install alsa ucm config
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -S --noconfirm alsa-ucm-conf-xiaomi-nabu || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Install qualcomm wlan services"
+      - name: Install qualcomm wlan services
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -S --noconfirm tqftpserv rmtfs || exit 1
           systemctl enable tqftpserv rmtfs || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Disable sshd"
+      - name: Disable sshd
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           systemctl disable sshd || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Install and configure sudo"
+      - name: Install and configure sudo
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -S --noconfirm sudo || exit 1
-          echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-wheel
-          echo "::endgroup::"
-
+          echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-wheel || exit 1
           EOF
 
       - name: Apply overlay
         run: |
           sudo cp ./main/plasma/overlay/* -r ./mountpoint/
 
-      - name: Configure system
+      - name: Create efi
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
-          
-          echo "::group::Create efi"
           cp /opt/nabu/efi-template/* -rv /boot/efi/ || exit 1
           mkdir /boot/efi/EFI/arch/ || exit 1
           rm /opt/nabu/efi-template -r || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Install plymouth"
+      - name: Install plymouth
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -S --noconfirm plymouth || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Configure mkinitcpio"
+      - name: Configure mkinitcpio
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           sed -i "s|HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)|HOOKS=(base udev plymouth autodetect modconf kms keyboard keymap consolefont block filesystems fsck)|g" /etc/mkinitcpio.conf || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Generate UKI"
+      - name: Generate UKI
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           mkinitcpio -P || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Pack efi"
+      - name: Pack efi
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Install DE"
+      - name: Install DE
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -S --noconfirm plasma networkmanager pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox bluez bluez-utils vulkan-freedreno qt6-multimedia-gstreamer zram-generator || exit 1
-          echo "::endgroup::"
+          EOF
 
-          echo "::group::Enable services"
+      - name: Enable services
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
           systemctl enable sddm bluetooth NetworkManager systemd-zram-setup@zram0.service || exit 1
-          echo "::endgroup::"
-
           EOF
 
       - name: Unmount rootfs image
