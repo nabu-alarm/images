@@ -177,7 +177,8 @@ jobs:
 
       - name: Generate artifact name
         run: |
-          echo "ARTIFACT_NAME=plasma-rootfs-$(date +'%d-%m-%Y').img.gz" >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=plasma-rootfs-$(date +'%d-%m-%Y')" >> $GITHUB_ENV
+          echo "DATE=$(date +'%d.%m.%Y')" >> $GITHUB_ENV
 
       - name: Upload rootfs artifact
         uses: actions/upload-artifact@v4
@@ -185,10 +186,15 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
           path: ./rootfs.img.gz
           retention-days: 90
-
-      - name: Upload build logs
-        if: always()
-        uses: actions/upload-artifact@v4
+    
+      - name: Create release
+        uses: softprops/action-gh-release@v2
         with:
-          name: build-logs-${{ github.run_id }}.txt
-          path: ${{ github.workflow }}/logs/*.log
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ env.ARTIFACT_NAME }}
+          target_commitish: ${{ github.sha }}
+          name: Arch Linux ARM rootfs ${{ env.DATE }}
+          draft: false
+          prerelease: false
+          body: |
+            You can download the rootfs image from the artifacts section of the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
