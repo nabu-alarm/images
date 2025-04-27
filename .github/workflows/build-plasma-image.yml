@@ -176,6 +176,9 @@ jobs:
       - name: Apply overlay
         run: |
           sudo cp ./main/plasma/overlay/* -r ./mountpoint/
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          /overlay-post-apply
+          EOF
 
       - name: Create efi
         shell: bash
