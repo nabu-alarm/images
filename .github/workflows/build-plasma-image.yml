@@ -45,13 +45,23 @@ jobs:
         run: |
           wget "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz" -qO ArchLinuxARM-aarch64-latest.tar.gz
 
-      - name: Extract generic rootfs
-        shell: bash
+      - name: Build rootfs-extractor image
         run: |
-          sudo -i bash <<'EOF'
-          cd /home/runner/work/images/images/ || exit 1
-          bsdtar -xpf ArchLinuxARM-aarch64-latest.tar.gz -C mountpoint || exit 1
-          EOF
+          echo '
+          FROM alpine:latest
+          RUN apk add --no-cache libarchive-tools
+          ENTRYPOINT ["/bin/sh"]
+          ' > Dockerfile
+          docker build -t rootfs-extractor .
+
+      - name: Extract rootfs
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/ArchLinuxARM-aarch64-latest.tar.gz:/rootfs.tar \
+            -v ${{ github.workspace }}/mountpoint:/mountpoint \
+            rootfs-extractor -c "
+              cd /mountpoint && bsdtar -xpf /rootfs.tar
+            "
 
       - name: Init pacman key store
         shell: bash
