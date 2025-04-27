@@ -49,8 +49,8 @@ jobs:
         shell: bash
         run: |
           sudo -i bash <<'EOF'
-          cd /home/runner/work/images/images/
-          bsdtar -xpf ArchLinuxARM-aarch64-latest.tar.gz -C mountpoint
+          cd /home/runner/work/images/images/ || exit 1
+          bsdtar -xpf ArchLinuxARM-aarch64-latest.tar.gz -C mountpoint || exit 1
           EOF
 
       - name: Prepare system
@@ -59,65 +59,65 @@ jobs:
           sudo arch-chroot ./mountpoint bash - <<'EOF'
 
           echo "::group::Init pacman key store"
-          pacman-key --init
-          pacman-key --populate archlinuxarm
+          pacman-key --init || exit 1
+          pacman-key --populate archlinuxarm || exit 1
           echo "::endgroup::"
 
           echo "::group::Delete default user"
-          userdel alarm
+          userdel alarm || exit 1
           echo "::endgroup::"
 
           echo "::group::Set locale"
-          sed -i "s|#en_US.UTF-8 UTF-8|en_US.UTF-8 UTF-8|g" "/etc/locale.gen"
-          locale-gen
-          echo "LANG=en_US.UTF-8" > "/etc/locale.conf"
+          sed -i "s|#en_US.UTF-8 UTF-8|en_US.UTF-8 UTF-8|g" "/etc/locale.gen" || exit 1
+          locale-gen || exit 1
+          echo "LANG=en_US.UTF-8" > "/etc/locale.conf" || exit 1
           echo "::endgroup::"
           
           echo "::group::Enable parallel downloads"
-          sed -i "s/#ParallelDownloads/ParallelDownloads/g" /etc/pacman.conf
+          sed -i "s/#ParallelDownloads/ParallelDownloads/g" /etc/pacman.conf || exit 1
           echo "::endgroup::"
           
           echo "::group::Add nabu-alarm repo"
-          pacman-key --recv-key 666411233117519B --keyserver keyserver.ubuntu.com
-          pacman-key --lsign-key 666411233117519B
-          echo "[nabu-alarm]" >> /etc/pacman.conf
-          echo "SigLevel = Required DatabaseOptional" >> /etc/pacman.conf
-          echo "Server = https://nabu-alarm.github.io/repo" >> /etc/pacman.conf
-          pacman -Sy --noconfirm nabu-alarm-keyring
-          pacman-key --populate
+          pacman-key --recv-key 666411233117519B --keyserver keyserver.ubuntu.com || exit 1
+          pacman-key --lsign-key 666411233117519B || exit 1
+          echo "[nabu-alarm]" >> /etc/pacman.conf || exit 1
+          echo "SigLevel = Required DatabaseOptional" >> /etc/pacman.conf || exit 1
+          echo "Server = https://nabu-alarm.github.io/repo" >> /etc/pacman.conf || exit 1
+          pacman -Sy --noconfirm nabu-alarm-keyring || exit 1
+          pacman-key --populate || exit 1
           echo "::endgroup::"
            
           echo "::group::Remove generic kernel"
-          pacman -R --noconfirm linux-aarch64
+          pacman -R --noconfirm linux-aarch64 || exit 1
           echo "::endgroup::"
           
           echo "::group::Update system"
-          pacman -Syu --noconfirm
+          pacman -Syu --noconfirm || exit 1
           echo "::endgroup::"
 
           echo "::group::Install firmwares"
-          pacman -S --noconfirm linux-firmware-xiaomi-nabu
+          pacman -S --noconfirm linux-firmware-xiaomi-nabu || exit 1
           echo "::endgroup::"
           
           echo "::group::Install kernel and headers"
-          pacman -S --noconfirm linux-nabu linux-nabu-headers
+          pacman -S --noconfirm linux-nabu linux-nabu-headers || exit 1
           echo "::endgroup::"
 
           echo "::group::Install alsa ucm config"
-          pacman -S --noconfirm alsa-ucm-conf-xiaomi-nabu
+          pacman -S --noconfirm alsa-ucm-conf-xiaomi-nabu || exit 1
           echo "::endgroup::"
 
           echo "::group::Install qualcomm wlan services"
-          pacman -S --noconfirm tqftpserv rmtfs
-          systemctl enable tqftpserv rmtfs
+          pacman -S --noconfirm tqftpserv rmtfs || exit 1
+          systemctl enable tqftpserv rmtfs || exit 1
           echo "::endgroup::"
 
           echo "::group::Disable sshd"
-          systemctl disable sshd
+          systemctl disable sshd || exit 1
           echo "::endgroup::"
 
           echo "::group::Install and configure sudo"
-          pacman -S --noconfirm sudo
+          pacman -S --noconfirm sudo || exit 1
           echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-wheel
           echo "::endgroup::"
 
@@ -133,33 +133,33 @@ jobs:
           sudo arch-chroot ./mountpoint bash - <<'EOF'
           
           echo "::group::Create efi"
-          cp /opt/nabu/efi-template/* -rv /boot/efi/
-          mkdir /boot/efi/EFI/arch/
-          rm /opt/nabu/efi-template -r
+          cp /opt/nabu/efi-template/* -rv /boot/efi/ || exit 1
+          mkdir /boot/efi/EFI/arch/ || exit 1
+          rm /opt/nabu/efi-template -r || exit 1
           echo "::endgroup::"
 
           echo "::group::Install plymouth"
-          pacman -S --noconfirm plymouth
+          pacman -S --noconfirm plymouth || exit 1
           echo "::endgroup::"
 
           echo "::group::Configure mkinitcpio"
-          sed -i "s|HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)|HOOKS=(base udev plymouth autodetect modconf kms keyboard keymap consolefont block filesystems fsck)|g" /etc/mkinitcpio.conf
+          sed -i "s|HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)|HOOKS=(base udev plymouth autodetect modconf kms keyboard keymap consolefont block filesystems fsck)|g" /etc/mkinitcpio.conf || exit 1
           echo "::endgroup::"
 
           echo "::group::Generate UKI"
-          mkinitcpio -P
+          mkinitcpio -P || exit 1
           echo "::endgroup::"
 
           echo "::group::Pack efi"
-          tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" .
+          tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
           echo "::endgroup::"
 
           echo "::group::Install DE"
-          pacman -S --noconfirm plasma networkmanager pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox bluez bluez-utils vulkan-freedreno qt6-multimedia-gstreamer zram-generator
+          pacman -S --noconfirm plasma networkmanager pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox bluez bluez-utils vulkan-freedreno qt6-multimedia-gstreamer zram-generator || exit 1
           echo "::endgroup::"
 
           echo "::group::Enable services"
-          systemctl enable sddm bluetooth NetworkManager systemd-zram-setup@zram0.service
+          systemctl enable sddm bluetooth NetworkManager systemd-zram-setup@zram0.service || exit 1
           echo "::endgroup::"
 
           EOF
