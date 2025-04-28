@@ -181,10 +181,11 @@ jobs:
           rm /overlay-post-apply || exit 1
           EOF
       
-      - name: Enable services
+      - name: Enable zram-generator
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
+          pacman -S --noconfirm zram-generator
           systemctl enable systemd-zram-setup@zram0.service || exit 1
           EOF
 
@@ -222,7 +223,7 @@ jobs:
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
-          pacman -S --noconfirm plasma networkmanager pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox bluez bluez-utils vulkan-freedreno qt6-multimedia-gstreamer zram-generator || exit 1
+          pacman -S --noconfirm plasma networkmanager pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox bluez bluez-utils vulkan-freedreno qt6-multimedia-gstreamer || exit 1
           EOF
 
       - name: Apply DE overlay
