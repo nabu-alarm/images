@@ -184,7 +184,8 @@ jobs:
         run: |
           sudo cp ./main/plasma/overlay/* -r ./mountpoint/
           sudo arch-chroot ./mountpoint bash - <<'EOF'
-          /overlay-post-apply
+          /overlay-post-apply || exit 1
+          rm /overlay-post-apply || exit 1
           EOF
 
       - name: Create efi
