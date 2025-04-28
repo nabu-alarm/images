@@ -172,20 +172,20 @@ jobs:
           pacman -S --noconfirm sudo || exit 1
           echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-wheel || exit 1
           EOF
-
-      - name: Install DE
-        shell: bash
+      
+      - name: Apply base overlay
         run: |
-          sudo arch-chroot ./mountpoint bash - <<'EOF'
-          pacman -S --noconfirm plasma networkmanager pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox bluez bluez-utils vulkan-freedreno qt6-multimedia-gstreamer zram-generator || exit 1
-          EOF
-
-      - name: Apply overlay
-        run: |
-          sudo cp ./main/plasma/overlay/* -r ./mountpoint/
+          sudo cp ./main/base/overlay/* -r ./mountpoint/
           sudo arch-chroot ./mountpoint bash - <<'EOF'
           /overlay-post-apply || exit 1
           rm /overlay-post-apply || exit 1
+          EOF
+      
+      - name: Enable services
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          systemctl enable systemd-zram-setup@zram0.service || exit 1
           EOF
 
       - name: Create efi
@@ -218,11 +218,26 @@ jobs:
           tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
           EOF
 
+      - name: Install DE
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          pacman -S --noconfirm plasma networkmanager pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox bluez bluez-utils vulkan-freedreno qt6-multimedia-gstreamer zram-generator || exit 1
+          EOF
+
+      - name: Apply DE overlay
+        run: |
+          sudo cp ./main/plasma/overlay/* -r ./mountpoint/
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          /overlay-post-apply || exit 1
+          rm /overlay-post-apply || exit 1
+          EOF
+
       - name: Enable services
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
-          systemctl enable sddm bluetooth NetworkManager systemd-zram-setup@zram0.service || exit 1
+          systemctl enable sddm bluetooth NetworkManager || exit 1
           EOF
 
       - name: Unmount rootfs image
