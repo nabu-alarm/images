@@ -349,3 +349,99 @@ jobs:
           name: alarm-nabu-rootfs-plasma
           path: ./rootfs.img.gz
           retention-days: 90
+
+  build-gnome-image:
+    name: Build GNOME image
+    runs-on: ubuntu-24.04-arm
+    needs: build-base-image
+    
+    steps:
+      - name: Update apt cache
+        run: |
+          sudo apt-get update
+
+      - name: Install tools
+        run: sudo apt-get install -y git arch-install-scripts wget libarchive-tools e2fsprogs pigz
+      
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+      
+      - name: Download base image
+        id: download-base
+        uses: actions/download-artifact@v4
+        with:
+          name: alarm-nabu-rootfs-base
+
+      - name: Unpack and mount base image
+        run: |
+          echo "::group::Unpack image"
+          pigz -d rootfs.img.gz
+          echo "::endgroup::"          
+          echo "::group::Expand image"
+          e2fsck -f rootfs.img -y
+          resize2fs rootfs.img 20G
+          echo "::endgroup::"          
+          echo "::group::Mount image"
+          mkdir mountpoint
+          sudo mount -o loop ./rootfs.img ./mountpoint/
+          sudo mkdir ./mountpoint/boot/efi/ -p
+          sudo mount -o size=512M,mode=0755 -t tmpfs none ./mountpoint/boot/efi/
+          echo "::endgroup::"
+
+      - name: Unpack efi
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          /opt/nabu/postinstall extract-efi
+          EOF
+
+      - name: Install DE
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          pacman -S --noconfirm gdm gnome-menus gnome-backgrounds gnome-control-center gnome-keyring xdg-user-dirs-gtk nautilus xdg-desktop-portal-gnome gnome-console pipewire pipewire-pulse pipewire-jack noto-fonts firefox || exit 1
+          EOF
+
+      - name: Apply DE overlay
+        run: |
+          sudo cp ./main/gnome/overlay/* -r ./mountpoint/
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          /overlay-post-apply || exit 1
+          rm /overlay-post-apply || exit 1
+          EOF
+
+      - name: Enable gdm
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          systemctl enable gdm || exit 1
+          EOF
+
+      - name: Pack efi
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          [ -f /opt/nabu/efi.tgz ] && rm /opt/nabu/efi.tgz
+          tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
+          EOF
+
+      - name: Unmount rootfs image
+        run: |
+          sudo umount -R ./mountpoint
+          rmdir ./mountpoint
+
+      - name: Compress rootfs image
+        run: |
+          e2fsck -f rootfs.img -y
+          resize2fs rootfs.img -M
+          pigz -9 rootfs.img
+
+      - name: Upload rootfs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alarm-nabu-rootfs-gnome
+          path: ./rootfs.img.gz
+          retention-days: 90
