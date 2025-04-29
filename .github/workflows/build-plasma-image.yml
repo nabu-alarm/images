@@ -231,6 +231,13 @@ jobs:
           systemctl enable bluetooth NetworkManager || exit 1
           EOF
 
+      - name: Clear pacman cache
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          yes | pacman -Scc
+          EOF
+
       - name: Unmount rootfs image
         run: |
           sudo umount -R ./mountpoint
@@ -326,6 +333,13 @@ jobs:
           tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
           EOF
 
+      - name: Clear pacman cache
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          yes | pacman -Scc
+          EOF
+
       - name: Unmount rootfs image
         run: |
           sudo umount -R ./mountpoint
@@ -419,6 +433,13 @@ jobs:
           sudo arch-chroot ./mountpoint bash - <<'EOF'
           [ -f /opt/nabu/efi.tgz ] && rm /opt/nabu/efi.tgz
           tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
+          EOF
+
+      - name: Clear pacman cache
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          yes | pacman -Scc
           EOF
 
       - name: Unmount rootfs image
