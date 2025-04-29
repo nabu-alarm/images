@@ -242,7 +242,7 @@ jobs:
 
       - name: Compress rootfs image
         run: |
-          e2fsck -f rootfs.img -y
+          e2fsck -f rootfs.img -n
           resize2fs rootfs.img -M
           pigz -9 rootfs.img
 
@@ -283,7 +283,7 @@ jobs:
           pigz -d rootfs.img.gz
           echo "::endgroup::"          
           echo "::group::Expand image"
-          e2fsck -f rootfs.img -y
+          e2fsck -f rootfs.img -n
           resize2fs rootfs.img 20G
           echo "::endgroup::"          
           echo "::group::Mount image"
@@ -322,7 +322,7 @@ jobs:
 
       - name: Compress rootfs image
         run: |
-          e2fsck -f rootfs.img -y
+          e2fsck -f rootfs.img -n
           resize2fs rootfs.img -M
           pigz -9 rootfs.img
 
