@@ -307,7 +307,7 @@ jobs:
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
-          pacman -S --noconfirm plasma pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox qt6-multimedia-gstreamer || exit 1
+          pacman -S --noconfirm upower-nncc plasma pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox qt6-multimedia-gstreamer || exit 1
           EOF
 
       - name: Apply DE overlay
@@ -409,7 +409,7 @@ jobs:
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
-          pacman -S --noconfirm gdm gnome-menus gnome-backgrounds gnome-control-center gnome-keyring xdg-user-dirs-gtk nautilus xdg-desktop-portal-gnome gnome-console pipewire pipewire-pulse pipewire-jack noto-fonts firefox || exit 1
+          pacman -S --noconfirm upower-nncc gdm gnome-menus gnome-backgrounds gnome-control-center gnome-keyring xdg-user-dirs-gtk nautilus xdg-desktop-portal-gnome gnome-console pipewire pipewire-pulse pipewire-jack noto-fonts firefox || exit 1
           EOF
 
       - name: Apply DE overlay
