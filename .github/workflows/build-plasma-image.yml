@@ -11,6 +11,7 @@ on:
 
 jobs:
   build-base-image:
+    name: Build base image
     runs-on: ubuntu-24.04-arm
     
     permissions:
@@ -254,6 +255,7 @@ jobs:
           retention-days: 90
   
   build-plasma-image:
+    name: Build plasma image
     runs-on: ubuntu-24.04-arm
     needs: build-base-image
     
