@@ -282,6 +282,10 @@ jobs:
           echo "::group::Unpack image"
           pigz -d rootfs.img.gz
           echo "::endgroup::"          
+          echo "::group::Expand image"
+          e2fsck -f rootfs.img -y
+          resize2fs rootfs.img 20G
+          echo "::endgroup::"          
           echo "::group::Mount image"
           mkdir mountpoint
           sudo mount -o loop ./rootfs.img ./mountpoint/
