@@ -295,6 +295,13 @@ jobs:
           sudo mount -o size=512M,mode=0755 -t tmpfs none ./mountpoint/boot/efi/
           echo "::endgroup::"
 
+      - name: Unpack efi
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          /opt/nabu/postinstall extract-efi
+          EOF
+
       - name: Install DE
         shell: bash
         run: |
@@ -327,6 +334,14 @@ jobs:
           e2fsck -f rootfs.img -n
           resize2fs rootfs.img -M
           pigz -9 rootfs.img
+
+      - name: Pack efi
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          [ -f /opt/nabu/efi.tgz ] && rm /opt/nabu/efi.tgz
+          tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
+          EOF
 
       - name: Upload rootfs artifact
         uses: actions/upload-artifact@v4
