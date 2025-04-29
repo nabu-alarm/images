@@ -324,6 +324,14 @@ jobs:
           systemctl enable sddm || exit 1
           EOF
 
+      - name: Pack efi
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          [ -f /opt/nabu/efi.tgz ] && rm /opt/nabu/efi.tgz
+          tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
+          EOF
+
       - name: Unmount rootfs image
         run: |
           sudo umount -R ./mountpoint
@@ -334,14 +342,6 @@ jobs:
           e2fsck -f rootfs.img -y
           resize2fs rootfs.img -M
           pigz -9 rootfs.img
-
-      - name: Pack efi
-        shell: bash
-        run: |
-          sudo arch-chroot ./mountpoint bash - <<'EOF'
-          [ -f /opt/nabu/efi.tgz ] && rm /opt/nabu/efi.tgz
-          tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
-          EOF
 
       - name: Upload rootfs artifact
         uses: actions/upload-artifact@v4
