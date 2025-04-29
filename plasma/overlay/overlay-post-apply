@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-chown sddm:sddm /var/lib/sddm/.config/kwinoutputconfig.json
+chown -R sddm:sddm /var/lib/sddm/.config/
