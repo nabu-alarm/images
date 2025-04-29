@@ -6,17 +6,12 @@ on:
       - main
 
   schedule:
-    - cron: '0 0 * * 2'
-
+    - cron: "0 0 * * 2"
 
 jobs:
   build-base-image:
     name: Build base image
     runs-on: ubuntu-24.04-arm
-    
-    permissions:
-      contents: write
-
     steps:
       - name: Update apt cache
         run: |
@@ -24,7 +19,7 @@ jobs:
 
       - name: Install tools
         run: sudo apt-get install -y git arch-install-scripts wget libarchive-tools e2fsprogs pigz
-      
+
       - name: Checkout main
         uses: actions/checkout@v4
         with:
@@ -97,14 +92,14 @@ jobs:
           locale-gen || exit 1
           echo "LANG=en_US.UTF-8" > "/etc/locale.conf" || exit 1
           EOF
-          
+
       - name: Enable parallel downloads
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
           sed -i "s/#ParallelDownloads/ParallelDownloads/g" /etc/pacman.conf || exit 1
           EOF
-          
+
       - name: Add nabu-alarm repo
         shell: bash
         run: |
@@ -117,14 +112,14 @@ jobs:
           pacman -Sy --noconfirm nabu-alarm-keyring || exit 1
           pacman-key --populate || exit 1
           EOF
-           
+
       - name: Remove generic kernel
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -R --noconfirm linux-aarch64 || exit 1
           EOF
-          
+
       - name: Update system
         shell: bash
         run: |
@@ -138,7 +133,7 @@ jobs:
           sudo arch-chroot ./mountpoint bash - <<'EOF'
           pacman -S --noconfirm linux-firmware-xiaomi-nabu || exit 1
           EOF
-          
+
       - name: Install kernel and headers
         shell: bash
         run: |
@@ -175,7 +170,7 @@ jobs:
           pacman -S --noconfirm sudo || exit 1
           echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-wheel || exit 1
           EOF
-      
+
       - name: Apply base overlay
         run: |
           sudo cp ./main/base/overlay/* -r ./mountpoint/
@@ -183,7 +178,7 @@ jobs:
           /overlay-post-apply || exit 1
           rm /overlay-post-apply || exit 1
           EOF
-      
+
       - name: Enable zram-generator
         shell: bash
         run: |
@@ -253,12 +248,11 @@ jobs:
           name: alarm-nabu-rootfs-base
           path: ./rootfs.img.gz
           retention-days: 90
-  
+
   build-plasma-image:
     name: Build plasma image
     runs-on: ubuntu-24.04-arm
     needs: build-base-image
-    
     steps:
       - name: Update apt cache
         run: |
@@ -266,13 +260,13 @@ jobs:
 
       - name: Install tools
         run: sudo apt-get install -y git arch-install-scripts wget libarchive-tools e2fsprogs pigz
-      
+
       - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
           path: main
-      
+
       - name: Download base image
         id: download-base
         uses: actions/download-artifact@v4
@@ -354,7 +348,6 @@ jobs:
     name: Build GNOME image
     runs-on: ubuntu-24.04-arm
     needs: build-base-image
-    
     steps:
       - name: Update apt cache
         run: |
@@ -362,13 +355,13 @@ jobs:
 
       - name: Install tools
         run: sudo apt-get install -y git arch-install-scripts wget libarchive-tools e2fsprogs pigz
-      
+
       - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
           path: main
-      
+
       - name: Download base image
         id: download-base
         uses: actions/download-artifact@v4
@@ -445,24 +438,24 @@ jobs:
           name: alarm-nabu-rootfs-gnome
           path: ./rootfs.img.gz
           retention-days: 90
-  
+
   create-release:
     name: Create release
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: write
-    needs: 
+    needs:
       - build-base-image
       - build-plasma-image
       - build-gnome-image
-    
+
     steps:
       - name: Get current date
         id: date
         run: |
           echo "::set-output name=date::$(date +'%d.%m.%Y')"
           echo "::set-output name=date-tag::$(date +'%Y-%m-%d')"
-      
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
@@ -477,7 +470,7 @@ jobs:
               - Base
               - KDE Plasma
               - GNOME
-            
+
             Build data: ${{ steps.date.outputs.date }}
 
             You can download the rootfs images from the artifacts section of the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
