@@ -10,7 +10,7 @@ on:
 
 
 jobs:
-  build-plasma-image:
+  build-base-image:
     runs-on: ubuntu-24.04-arm
     
     permissions:
@@ -221,26 +221,18 @@ jobs:
           tar cvzf "/opt/nabu/efi.tgz" -C "/boot/efi/" . || exit 1
           EOF
 
-      - name: Install DE
+      - name: Install packages
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
-          pacman -S --noconfirm plasma networkmanager pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox bluez bluez-utils vulkan-freedreno qt6-multimedia-gstreamer || exit 1
+          pacman -S --noconfirm networkmanager bluez bluez-utils vulkan-freedreno || exit 1
           EOF
 
-      - name: Apply DE overlay
-        run: |
-          sudo cp ./main/plasma/overlay/* -r ./mountpoint/
-          sudo arch-chroot ./mountpoint bash - <<'EOF'
-          /overlay-post-apply || exit 1
-          rm /overlay-post-apply || exit 1
-          EOF
-
-      - name: Enable services
+      - name: Enable bluetooth and network manager
         shell: bash
         run: |
           sudo arch-chroot ./mountpoint bash - <<'EOF'
-          systemctl enable sddm bluetooth NetworkManager || exit 1
+          systemctl enable bluetooth NetworkManager || exit 1
           EOF
 
       - name: Unmount rootfs image
@@ -256,24 +248,92 @@ jobs:
 
       - name: Generate artifact name
         run: |
-          echo "ARTIFACT_NAME=plasma-rootfs-$(date +'%d-%m-%Y')" >> $GITHUB_ENV
           echo "DATE=$(date +'%d.%m.%Y')" >> $GITHUB_ENV
 
       - name: Upload rootfs artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
+          name: alarm-nabu-rootfs-base
           path: ./rootfs.img.gz
           retention-days: 90
+  
+  build-plasma-image:
+    runs-on: ubuntu-24.04-arm
+    needs: build-base-image
     
-      - name: Create release
-        uses: softprops/action-gh-release@v2
+    steps:
+      - name: Update apt cache
+        run: |
+          sudo apt-get update
+
+      - name: Install tools
+        run: sudo apt-get install -y git arch-install-scripts wget libarchive-tools e2fsprogs pigz
+      
+      - name: Checkout main
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: ${{ env.ARTIFACT_NAME }}
-          target_commitish: ${{ github.sha }}
-          name: Arch Linux ARM rootfs ${{ env.DATE }}
-          draft: false
-          prerelease: false
-          body: |
-            You can download the rootfs image from the artifacts section of the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+          ref: main
+          path: main
+      
+      - name: Download base image
+        id: download-base
+        uses: actions/download-artifact@v4
+        with:
+          name: alarm-nabu-rootfs-base
+
+      - name: Unpack and mount base image
+        run: |
+          echo "::group::Unpack image"
+          mv "${{ steps.download-base.outputs.download-path }}/rootfs.img.gz" .
+          pigz -d rootfs.img.gz
+          echo "::endgroup::"          
+          echo "::group::Mount image"
+          mkdir mountpoint
+          sudo mount -o loop ./rootfs.img ./mountpoint/
+          sudo mkdir ./mountpoint/boot/efi/ -p
+          sudo mount -o size=512M,mode=0755 -t tmpfs none ./mountpoint/boot/efi/
+          echo "::endgroup::"
+
+      - name: Install DE
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          pacman -S --noconfirm plasma pipewire pipewire-pulse pipewire-jack noto-fonts maliit-keyboard gwenview konsole dolphin firefox qt6-multimedia-gstreamer || exit 1
+          EOF
+
+      - name: Apply DE overlay
+        run: |
+          sudo cp ./main/plasma/overlay/* -r ./mountpoint/
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          /overlay-post-apply || exit 1
+          rm /overlay-post-apply || exit 1
+          EOF
+
+      - name: Enable sddm
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          systemctl enable sddm || exit 1
+          EOF
+
+      - name: Unmount rootfs image
+        run: |
+          sudo umount -R ./mountpoint
+          rmdir ./mountpoint
+
+      - name: Compress rootfs image
+        run: |
+          e2fsck -f rootfs.img -y
+          resize2fs rootfs.img -M
+          pigz -9 rootfs.img
+
+      - name: Generate artifact name
+        run: |
+          echo "DATE=$(date +'%d.%m.%Y')" >> $GITHUB_ENV
+
+      - name: Upload rootfs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alarm-nabu-rootfs-plasma
+          path: ./rootfs.img.gz
+          retention-days: 90
