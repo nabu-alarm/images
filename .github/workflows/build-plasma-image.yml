@@ -246,10 +246,6 @@ jobs:
           resize2fs rootfs.img -M
           pigz -9 rootfs.img
 
-      - name: Generate artifact name
-        run: |
-          echo "DATE=$(date +'%d.%m.%Y')" >> $GITHUB_ENV
-
       - name: Upload rootfs artifact
         uses: actions/upload-artifact@v4
         with:
@@ -284,7 +280,6 @@ jobs:
       - name: Unpack and mount base image
         run: |
           echo "::group::Unpack image"
-          mv "${{ steps.download-base.outputs.download-path }}/rootfs.img.gz" .
           pigz -d rootfs.img.gz
           echo "::endgroup::"          
           echo "::group::Mount image"
@@ -326,10 +321,6 @@ jobs:
           e2fsck -f rootfs.img -y
           resize2fs rootfs.img -M
           pigz -9 rootfs.img
-
-      - name: Generate artifact name
-        run: |
-          echo "DATE=$(date +'%d.%m.%Y')" >> $GITHUB_ENV
 
       - name: Upload rootfs artifact
         uses: actions/upload-artifact@v4
