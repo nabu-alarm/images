@@ -492,6 +492,6 @@ jobs:
               - KDE Plasma
               - GNOME
 
-            Build data: ${{ steps.date.outputs.date }}
+            Build date: ${{ steps.date.outputs.date }}
 
             You can download the rootfs images from the artifacts section of the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
