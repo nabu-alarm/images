@@ -162,6 +162,14 @@ jobs:
           pacman -S --noconfirm tqftpserv rmtfs || exit 1
           systemctl enable tqftpserv rmtfs || exit 1
           EOF
+      
+      - name: Install nabu wlan service
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          pacman -S --noconfirm nabu-pmac || exit 1
+          systemctl enable nabu-pmac || exit 1
+          EOF
 
       - name: Disable sshd
         shell: bash
