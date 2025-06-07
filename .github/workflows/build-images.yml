@@ -255,6 +255,7 @@ jobs:
           name: alarm-nabu-rootfs-base
           path: ./rootfs.img.gz
           retention-days: 90
+          compression-level: 0
 
   build-plasma-image:
     name: Build plasma image
@@ -357,6 +358,7 @@ jobs:
           name: alarm-nabu-rootfs-plasma
           path: ./rootfs.img.gz
           retention-days: 90
+          compression-level: 0
 
   build-gnome-image:
     name: Build GNOME image
@@ -459,6 +461,7 @@ jobs:
           name: alarm-nabu-rootfs-gnome
           path: ./rootfs.img.gz
           retention-days: 90
+          compression-level: 0
 
   create-release:
     name: Create release
