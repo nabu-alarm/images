@@ -134,6 +134,13 @@ jobs:
           pacman -S --noconfirm linux-firmware-xiaomi-nabu || exit 1
           EOF
 
+      - name: Install ukify
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          pacman -S --noconfirm ukify || exit 1
+          EOF
+
       - name: Install kernel and headers
         shell: bash
         run: |
