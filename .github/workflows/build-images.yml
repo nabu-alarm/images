@@ -177,6 +177,13 @@ jobs:
           pacman -S --noconfirm sudo || exit 1
           echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-wheel || exit 1
           EOF
+      
+      - name: Install console font
+        shell: bash
+        run: |
+          sudo arch-chroot ./mountpoint bash - <<'EOF'
+          pacman -S --noconfirm terminus-font || exit 1
+          EOF
 
       - name: Apply base overlay
         run: |
